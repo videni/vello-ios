@@ -78,7 +78,14 @@ class MetalViewController: UIViewController {
         guard self.velloApp == nil else { return }
         
         let viewPointer = Unmanaged.passUnretained(self.metalV).toOpaque()
-        let metalLayer = Unmanaged.passUnretained(self.metalV.layer).toOpaque()
+
+        guard let layer = self.metalV.layer as? CAMetalLayer else {
+            return
+        }
+        
+        print("* am I framebufferOnly enabled?", layer.framebufferOnly)
+
+        let metalLayer = Unmanaged.passUnretained(layer).toOpaque()
         let maximumFrames = Int32(UIScreen.main.maximumFramesPerSecond)
         
         let viewObj = IOSViewObj(

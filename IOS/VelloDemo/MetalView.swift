@@ -30,13 +30,13 @@ class MetalViewInternal: UIView {
 
         // https://developer.apple.com/documentation/quartzcore/cametallayer/1478157-presentswithtransaction/
         layer.presentsWithTransaction = false
-        layer.framebufferOnly = true
+        layer.framebufferOnly = false
         // nativeScale is real physical pixel scale
         // https://tomisacat.xyz/tech/2017/06/17/scale-nativescale-contentsscale.html
         self.contentScaleFactor = UIScreen.main.nativeScale
+        
     }
 }
-
 
 struct MetalView: UIViewControllerRepresentable {
     typealias UIViewControllerType = MetalViewController

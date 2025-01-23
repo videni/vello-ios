@@ -133,7 +133,7 @@ pub extern "C" fn App_render(
     })
     .expect("Failed to create renderer");
 
-    let (surface, _texture_view) = app.app_surface.get_current_frame_view(Some(app.format));
+    let (surface, texture_view) = app.app_surface.get_current_frame_view(Some(app.format));
 
     let antialiasing_method = AA_CONFIGS[0 as usize];
 
@@ -144,11 +144,11 @@ pub extern "C" fn App_render(
         antialiasing_method,
     };
     renderer
-        .render_to_surface(
+        .render_to_texture(
             &app.app_surface.device,
             &app.app_surface.queue,
             &fragment,
-            &surface,
+            &texture_view,
             &render_params,
         )
         .expect("failed to render to surface");
