@@ -1,9 +1,10 @@
 use std::{num::NonZeroUsize, time::Instant};
-
 use scenes::{test_scenes, ImageCache, SceneParams, SimpleText};
 use app_surface::{AppSurface, IOSViewObj, SurfaceFrame};
 use vello::{kurbo::{Affine as KurboAffine, Vec2}, peniko::Color, AaConfig, Renderer, RendererOptions, Scene};
 use vello::wgpu::TextureFormat;
+use std::os::raw::c_char;
+use std::ffi::CStr;
 
 pub struct App
 {
@@ -54,7 +55,11 @@ pub struct Rectangle<T = f32> {
 }
 
 #[no_mangle]
-pub extern "C" fn App_create(ios_obj: IOSViewObj) -> *mut libc::c_void {
+pub extern "C" fn App_create(ios_obj: IOSViewObj, assets_dir: *const c_char) -> *mut libc::c_void {
+    let assets_dir = unsafe { CStr::from_ptr(assets_dir) };
+    
+    println!("{}", assets_dir.to_str().unwrap());
+    
     println!(
         "AppSurface_create, maximum frames: {}",
         ios_obj.maximum_frames
@@ -73,15 +78,16 @@ pub extern "C" fn App_create(ios_obj: IOSViewObj) -> *mut libc::c_void {
 const AA_CONFIGS: [AaConfig; 3] = [AaConfig::Area, AaConfig::Msaa8, AaConfig::Msaa16];
 
 #[no_mangle]
-pub extern "C" fn App_render(pdf: *mut App, 
+pub extern "C" fn App_render(
+    app: *mut App, 
     scene_idx: u32, 
     bounds: Rectangle, 
     scale_factor: f32, 
     affine: Affine,
-    page_no: u32,
-    clip_bounds: Rectangle<u32>
-) {
-    let app = unsafe { &mut *(pdf as *mut App) };
+) {    
+    println!("App_render {:?}", bounds);
+
+    let app = unsafe { &mut *(app as *mut App) };
 
     let mut scenes = test_scenes::test_scenes().scenes;
     
@@ -92,6 +98,7 @@ pub extern "C" fn App_render(pdf: *mut App,
     let transform = KurboAffine::IDENTITY;
 
     let title = format!("Vello demo - {}", example_scene.config.name);
+    println!("{}", title);
 
     let mut fragment =  Scene::new();
 
@@ -145,5 +152,6 @@ pub extern "C" fn App_render(pdf: *mut App,
             &render_params,
         )
         .expect("failed to render to surface");
+
     surface.present();
 }
