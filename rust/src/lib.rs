@@ -5,6 +5,7 @@ use vello::{kurbo::{Affine as KurboAffine, Vec2}, peniko::Color, AaConfig, Rende
 use vello::wgpu::TextureFormat;
 use std::os::raw::c_char;
 use std::ffi::CStr;
+use tracing_subscriber;
 
 pub struct App
 {
@@ -58,14 +59,22 @@ pub struct Rectangle<T = f32> {
 pub extern "C" fn App_create(ios_obj: IOSViewObj, assets_dir: *const c_char) -> *mut libc::c_void {
     let assets_dir = unsafe { CStr::from_ptr(assets_dir) };
     
+    tracing_subscriber::fmt::fmt()
+        .pretty()
+        .init();
+
     println!("{}", assets_dir.to_str().unwrap());
     
+    std::env::set_var("RUST_BACKTRACE", "full".to_string());
+    std::env::set_var("RUST_LOG", "TRACE".to_string());
+
     println!(
         "AppSurface_create, maximum frames: {}",
         ios_obj.maximum_frames
     );
+    // Failed to create renderer: Couldn't find `Rgba8Unorm` or `Bgra8Unorm` texture formats for surface
     
-    // vello not implemented Bgra8UnormSrgb yet，so we hard-coded it as Bgra8Unorm
+    // Vello not implemented Bgra8UnormSrgb yet，so we hard-coded it as Bgra8Unorm
     let format = TextureFormat::Bgra8Unorm;
 
     let obj  = App::new(AppSurface::new(ios_obj), format);
@@ -118,6 +127,7 @@ pub extern "C" fn App_render(
         .function
         .render(&mut fragment, &mut scene_params);
 
+    dbg!("hello", app.format);
     let mut renderer = Renderer::new(
         &app.app_surface.device,
         RendererOptions {
@@ -133,7 +143,7 @@ pub extern "C" fn App_render(
     })
     .expect("Failed to create renderer");
 
-    let (surface, texture_view) = app.app_surface.get_current_frame_view(Some(app.format));
+    let (surface, _texture_view) = app.app_surface.get_current_frame_view(Some(app.format));
 
     let antialiasing_method = AA_CONFIGS[0 as usize];
 
@@ -144,11 +154,11 @@ pub extern "C" fn App_render(
         antialiasing_method,
     };
     renderer
-        .render_to_texture(
+        .render_to_surface(
             &app.app_surface.device,
             &app.app_surface.queue,
             &fragment,
-            &texture_view,
+            &surface,
             &render_params,
         )
         .expect("failed to render to surface");

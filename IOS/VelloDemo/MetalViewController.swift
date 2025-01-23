@@ -96,7 +96,6 @@ class MetalViewController: UIViewController {
         )
         
         let assetsDir = Bundle.main.resourceURL!
-        print(assetsDir)
         
         self.velloApp = assetsDir.path.withCString{ assetsDir in
             return App_create(viewObj, assetsDir)
