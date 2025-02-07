@@ -96,11 +96,13 @@ pub extern "C" fn App_render(
     bounds: Rectangle, 
     scale_factor: f32, 
     affine: Affine,
-) {    
+) {  
+
     println!("App_render {:?}", bounds);
     dbg!(Vec2::new(bounds.width as f64, bounds.height as f64));
 
     let app = unsafe { &mut *(app as *mut App) };
+    app.app_surface.resize_surface();
 
     let mut scenes: Vec<scenes::ExampleScene> = test_scenes::test_scenes().scenes;
     
@@ -159,8 +161,8 @@ pub extern "C" fn App_render(
     };
     renderer
         .render_to_surface(
-            &app.app_surface.device,
-            &app.app_surface.queue,
+            &*app.app_surface.device,
+            &*app.app_surface.queue,
             &fragment,
             &surface,
             &render_params,
