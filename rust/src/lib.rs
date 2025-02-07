@@ -1,4 +1,4 @@
-use std::{num::NonZeroUsize, time::Instant};
+use std::{ffi::CString, mem::ManuallyDrop, num::NonZeroUsize, ptr, time::Instant};
 use scenes::{test_scenes, ImageCache, SceneParams, SimpleText};
 use app_surface::{AppSurface, IOSViewObj, SurfaceFrame};
 use vello::{kurbo::{Affine as KurboAffine, Vec2}, peniko::Color, AaConfig, Renderer, RendererOptions, Scene};
@@ -26,7 +26,6 @@ impl App {
         }
     }
 }
-
 
 #[repr(C)]
 pub struct Affine
@@ -57,7 +56,7 @@ pub struct Rectangle<T = f32> {
 
 #[no_mangle]
 pub extern "C" fn App_create(ios_obj: IOSViewObj, assets_dir: *const c_char) -> *mut libc::c_void {
-    let assets_dir = unsafe { CStr::from_ptr(assets_dir) };
+    let assets_dir: &CStr = unsafe { CStr::from_ptr(assets_dir) };
     
     tracing_subscriber::fmt::fmt()
         .pretty()
@@ -77,7 +76,11 @@ pub extern "C" fn App_create(ios_obj: IOSViewObj, assets_dir: *const c_char) -> 
     // Vello not implemented Bgra8UnormSrgb yet，so we hard-coded it as Bgra8Unorm
     let format = TextureFormat::Bgra8Unorm;
 
-    let obj  = App::new(AppSurface::new(ios_obj), format);
+    let mut app_surface = AppSurface::new(ios_obj);
+    let ctx = &mut app_surface.ctx ;
+    ctx.update_config_format(format);
+
+    let obj  = App::new(app_surface, format);
     
     let box_obj = Box::new(obj);
 
@@ -95,10 +98,11 @@ pub extern "C" fn App_render(
     affine: Affine,
 ) {    
     println!("App_render {:?}", bounds);
+    dbg!(Vec2::new(bounds.width as f64, bounds.height as f64));
 
     let app = unsafe { &mut *(app as *mut App) };
 
-    let mut scenes = test_scenes::test_scenes().scenes;
+    let mut scenes: Vec<scenes::ExampleScene> = test_scenes::test_scenes().scenes;
     
     let scene_ix = scene_idx.rem_euclid(scenes.len() as u32);
 
@@ -118,7 +122,7 @@ pub extern "C" fn App_render(
         time: Instant::now().elapsed().as_secs_f64(),
         text: &mut simple_text,
         images: &mut images,
-        resolution: None,
+        resolution: Some(Vec2::new(bounds.width as f64, bounds.height as f64)),
         base_color: None,
         interactive: true,
         complexity: 0,
@@ -164,4 +168,37 @@ pub extern "C" fn App_render(
         .expect("failed to render to surface");
 
     surface.present();
+}
+
+#[repr(C)]
+pub struct ExampleScene
+{
+    pub name: *const c_char,
+}
+
+#[repr(C)]
+pub struct Array {
+    ptr: *mut libc::c_void,
+    len: usize,
+    cap: usize,
+}
+
+#[no_mangle]
+pub extern "C" fn scenes() -> Array
+{
+    let scenes: Vec<ExampleScene> = test_scenes::test_scenes()
+        .scenes
+        .iter()
+        .map(|s| ExampleScene{
+            name:  CString::new(s.config.name.clone()).unwrap().into_raw() as *mut c_char,
+        }).collect::<Vec<ExampleScene>>();
+
+    let mut v = ManuallyDrop::new(scenes);
+    let (ptr, len, cap) = (v.as_mut_ptr(), v.len(), v.capacity());
+    
+    Array {
+        ptr: ptr as *mut libc::c_void,
+        len,
+        cap
+    }
 }

@@ -34,7 +34,6 @@ class MetalViewInternal: UIView {
         // nativeScale is real physical pixel scale
         // https://tomisacat.xyz/tech/2017/06/17/scale-nativescale-contentsscale.html
         self.contentScaleFactor = UIScreen.main.nativeScale
-        
     }
 }
 

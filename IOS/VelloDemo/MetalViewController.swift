@@ -10,7 +10,7 @@ class MetalViewController: UIViewController {
     private var metalV: MetalViewInternal!
     private var velloApp: OpaquePointer?
     
-    let sceneIdx: UInt32 = 0
+    let sceneIdx: UInt32 = 1
     
     private lazy var displayLink: CADisplayLink = {
         CADisplayLink(target: self, selector: #selector(enterFrame))

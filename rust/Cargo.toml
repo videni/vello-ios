@@ -8,8 +8,8 @@ edition = "2021"
 crate-type = ["staticlib"]
 
 [dependencies]
-app-surface= { path = "../../wgpu-in-app/app-surface"}
-# app-surface= { git="https://github.com/videni/wgpu-in-app"}
+# app-surface= { path = "../../wgpu-in-app/app-surface"}
+app-surface= { git="https://github.com/videni/wgpu-in-app"}
 libc = "0.2.169"
 vello = { git="https://github.com/linebender/vello", branch="main" }
 scenes= { git="https://github.com/linebender/vello", branch="main" }

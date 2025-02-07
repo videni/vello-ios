@@ -36,4 +36,15 @@ VelloApp* App_create(IOSViewObj ios_obj, const char *path);
 
 void App_render(VelloApp *vello_app, uint32_t scene_idx, Rectangle bounds, float scaler_factor, Affine transform);
 
+
+typedef struct Array
+{
+  void *ptr;
+  int32_t len;
+  int32_t cap;
+} Array;
+
+
+Array* scenes();
+
 #endif
